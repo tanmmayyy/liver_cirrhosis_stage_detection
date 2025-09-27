@@ -289,10 +289,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 For questions and support:
-- 📧 Email: [your-email@domain.com]
+- 📧 Email: [jaintanmay543@gmail.com]
 - 🐛 Issues: Create an issue on GitHub
 - 💬 Discussions: Use GitHub Discussions
 
 ---
 
 **Made with ❤️ for advancing medical AI applications**
+
