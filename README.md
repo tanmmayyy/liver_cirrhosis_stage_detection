@@ -295,5 +295,4 @@ For questions and support:
 
 ---
 
-**Made with ❤️ for advancing medical AI applications**#   l i v e r _ c i r r h o s i s _ s t a g e _ d e t e c t i o n  
- 
+**Made with ❤️ for advancing medical AI applications**
