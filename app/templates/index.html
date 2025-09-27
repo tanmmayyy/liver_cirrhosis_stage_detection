@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liver Cirrhosis Stage Detection</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #fff, #e0f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .form-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 24px;
+            padding: 35px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .form-section h2 {
+            color: #2d3748;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-group input:hover,
+        .form-group select:hover {
+            border-color: #cbd5e0;
+        }
+
+        .predict-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .predict-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .predict-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 24px;
+            padding: 35px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            position: sticky;
+            top: 20px;
+            height: fit-content;
+        }
+
+        .results-section h2 {
+            color: #2d3748;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .prediction-result {
+            text-align: center;
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .prediction-result.stage-1 {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+        }
+
+        .prediction-result.stage-2 {
+            background: linear-gradient(135deg, #ed8936, #dd6b20);
+            color: white;
+        }
+
+        .prediction-result.stage-3 {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+            color: white;
+        }
+
+        .prediction-result.default {
+            background: linear-gradient(135deg, #a0aec0, #718096);
+            color: white;
+        }
+
+        .stage-number {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .stage-label {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .confidence-score {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .stage-info {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .stage-info h3 {
+            color: #2d3748;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .stage-info p {
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border-left: 4px solid #f56565;
+            display: none;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border-left: 4px solid #48bb78;
+            display: none;
+        }
+
+        .feature-importance {
+            margin-top: 25px;
+        }
+
+        .feature-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+
+        .feature-name {
+            width: 120px;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .feature-progress {
+            flex: 1;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            margin: 0 10px;
+            overflow: hidden;
+        }
+
+        .feature-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        .feature-value {
+            width: 40px;
+            text-align: right;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .medical-disclaimer {
+            background: rgba(255, 243, 205, 0.9);
+            border: 1px solid #f6ad55;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            color: #744210;
+        }
+
+        .medical-disclaimer h3 {
+            color: #c05621;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .results-section {
+                position: static;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 15px;
+            }
+
+            .form-section, .results-section {
+                padding: 25px 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+        }
+
+        .form-group.half-width {
+            grid-column: span 1;
+        }
+
+        .section-divider {
+            border-top: 2px solid #e2e8f0;
+            margin: 30px 0;
+            padding-top: 25px;
+        }
+
+        .section-title {
+            color: #2d3748;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2d3748;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-heartbeat"></i> Liver Cirrhosis Stage Detection</h1>
+            <p>Advanced AI-powered system for predicting liver cirrhosis stages based on Mayo Clinic clinical data and biomarkers</p>
+        </div>
+
+        <div class="main-content">
+            <div class="form-section">
+                <h2><i class="fas fa-user-md"></i> Patient Information</h2>
+                
+                <form id="predictionForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="age">Age (years) <i class="fas fa-info-circle tooltip" data-tooltip="Patient age in years"></i></label>
+                            <input type="number" id="age" name="age" min="18" max="100" step="0.1" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sex">Sex</label>
+                            <select id="sex" name="sex" required>
+                                <option value="">Select sex</option>
+                                <option value="M">Male</option>
+                                <option value="F">Female</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="drug">Treatment</label>
+                            <select id="drug" name="drug" required>
+                                <option value="">Select treatment</option>
+                                <option value="D-penicillamine">D-penicillamine</option>
+                                <option value="Placebo">Placebo</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="n_days">Follow-up Days <i class="fas fa-info-circle tooltip" data-tooltip="Days from registration to analysis"></i></label>
+                            <input type="number" id="n_days" name="n_days" min="1" max="10000" required>
+                        </div>
+                    </div>
+
+                    <div class="section-divider">
+                        <div class="section-title"><i class="fas fa-stethoscope"></i> Clinical Signs</div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="ascites">Ascites <i class="fas fa-info-circle tooltip" data-tooltip="Fluid accumulation in abdomen"></i></label>
+                            <select id="ascites" name="ascites" required>
+                                <option value="">Select status</option>
+                                <option value="N">No</option>
+                                <option value="Y">Yes</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="hepatomegaly">Hepatomegaly <i class="fas fa-info-circle tooltip" data-tooltip="Enlarged liver"></i></label>
+                            <select id="hepatomegaly" name="hepatomegaly" required>
+                                <option value="">Select status</option>
+                                <option value="N">No</option>
+                                <option value="Y">Yes</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="spiders">Spider Angiomas <i class="fas fa-info-circle tooltip" data-tooltip="Spider-like blood vessels on skin"></i></label>
+                            <select id="spiders" name="spiders" required>
+                                <option value="">Select status</option>
+                                <option value="N">No</option>
+                                <option value="Y">Yes</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edema">Edema <i class="fas fa-info-circle tooltip" data-tooltip="Fluid retention severity"></i></label>
+                            <select id="edema" name="edema" required>
+                                <option value="">Select status</option>
+                                <option value="N">No edema</option>
+                                <option value="S">Moderate (responds to diuretics)</option>
+                                <option value="Y">Severe (despite diuretics)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="section-divider">
+                        <div class="section-title"><i class="fas fa-vial"></i> Laboratory Results</div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="bilirubin">Bilirubin (mg/dL) <i class="fas fa-info-circle tooltip" data-tooltip="Normal: 0.3-1.2 mg/dL"></i></label>
+                            <input type="number" id="bilirubin" name="bilirubin" min="0.1" max="50" step="0.1" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cholesterol">Cholesterol (mg/dL) <i class="fas fa-info-circle tooltip" data-tooltip="Normal: <200 mg/dL"></i></label>
+                            <input type="number" id="cholesterol" name="cholesterol" min="50" max="800" step="1" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="albumin">Albumin (gm/dL) <i class="fas fa-info-circle tooltip" data-tooltip="Normal: 3.4-5.4 gm/dL"></i></label>
+                            <input type="number" id="albumin" name="albumin" min="1" max="6" step="0.1" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="copper">Copper (μg/day) <i class="fas fa-info-circle tooltip" data-tooltip="Normal: 15-50 μg/day"></i></label>
+                            <input type="number" id="copper" name="copper" min="10" max="500" step="1" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="alk_phos">Alkaline Phosphatase (U/L) <i class="fas fa-info-circle tooltip" data-tooltip="Normal: 44-147 U/L"></i></label>
+                            <input type="number" id="alk_phos" name="alk_phos" min="50" max="5000" step="1" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sgot">SGOT (U/mL) <i class="fas fa-info-circle tooltip" data-tooltip="Normal: 8-40 U/mL"></i></label>
+                            <input type="number" id="sgot" name="sgot" min="10" max="500" step="1" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tryglicerides">Triglycerides (mg/dL) <i class="fas fa-info-circle tooltip" data-tooltip="Normal: <150 mg/dL"></i></label>
+                            <input type="number" id="tryglicerides" name="tryglicerides" min="50" max="800" step="1" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="platelets">Platelets (×1000/μL) <i class="fas fa-info-circle tooltip" data-tooltip="Normal: 150-450 ×1000/μL"></i></label>
+                            <input type="number" id="platelets" name="platelets" min="50" max="600" step="1" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prothrombin">Prothrombin Time (sec) <i class="fas fa-info-circle tooltip" data-tooltip="Normal: 11-13 seconds"></i></label>
+                            <input type="number" id="prothrombin" name="prothrombin" min="8" max="25" step="0.1" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="predict-btn">
+                        <i class="fas fa-brain"></i> Predict Cirrhosis Stage
+                    </button>
+                </form>
+
+                <div class="error-message" id="errorMessage"></div>
+                <div class="success-message" id="successMessage"></div>
+            </div>
+
+            <div class="results-section">
+                <h2><i class="fas fa-chart-line"></i> Prediction Results</h2>
+                
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner"></div>
+                    <p>Analyzing patient data...</p>
+                </div>
+
+                <div class="prediction-result default" id="predictionResult">
+                    <div class="stage-number">?</div>
+                    <div class="stage-label">Awaiting Analysis</div>
+                    <div class="confidence-score">Enter patient data to get prediction</div>
+                </div>
+
+                <div class="stage-info" id="stageInfo">
+                    <h3><i class="fas fa-info-circle"></i> Stage Information</h3>
+                    <p>Complete the patient form to receive detailed analysis of liver cirrhosis stage and clinical recommendations.</p>
+                </div>
+
+                <div class="feature-importance" id="featureImportance" style="display: none;">
+                    <h3><i class="fas fa-weight-hanging"></i> Key Contributing Factors</h3>
+                    <div id="importanceList"></div>
+                </div>
+
+                <div class="medical-disclaimer">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Medical Disclaimer</h3>
+                    <p><strong>This tool is for educational purposes only.</strong> Results should not replace professional medical diagnosis or treatment. Always consult with qualified healthcare providers for medical decisions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class LiverCirrhosisPredictor {
+            constructor() {
+                this.form = document.getElementById('predictionForm');
+                this.loadingSpinner = document.getElementById('loadingSpinner');
+                this.predictionResult = document.getElementById('predictionResult');
+                this.stageInfo = document.getElementById('stageInfo');
+                this.featureImportance = document.getElementById('featureImportance');
+                this.errorMessage = document.getElementById('errorMessage');
+                this.successMessage = document.getElementById('successMessage');
+                
+                this.initializeEventListeners();
+            }
+
+            initializeEventListeners() {
+                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+                
+                // Add real-time validation
+                const inputs = this.form.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    input.addEventListener('input', () => this.validateField(input));
+                });
+            }
+
+            validateField(field) {
+                const value = field.value;
+                const name = field.name;
+                
+                // Add visual feedback for validation
+                if (value) {
+                    field.style.borderColor = '#48bb78';
+                } else {
+                    field.style.borderColor = '#e2e8f0';
+                }
+
+                // Specific validations
+                if (name === 'bilirubin' && value > 20) {
+                    this.showWarning('High bilirubin level detected');
+                }
+                if (name === 'albumin' && value < 2.5) {
+                    this.showWarning('Low albumin level detected');
+                }
+            }
+
+            async handleSubmit(e) {
+                e.preventDefault();
+                
+                try {
+                    this.showLoading(true);
+                    this.hideMessages();
+                    
+                    const formData = new FormData(this.form);
+                    const patientData = Object.fromEntries(formData.entries());
+                    
+                    // Convert age from years to days for backend compatibility
+                    patientData.age = Math.round(parseFloat(patientData.age) * 365.25);
+                    
+                    // Convert numeric fields
+                    const numericFields = ['n_days', 'age', 'bilirubin', 'cholesterol', 'albumin', 
+                                         'copper', 'alk_phos', 'sgot', 'tryglicerides', 'platelets', 'prothrombin'];
+                    
+                    numericFields.forEach(field => {
+                        if (patientData[field]) {
+                            patientData[field] = parseFloat(patientData[field]);
+                        }
+                    });
+
+                    // Simulate API call (replace with actual endpoint)
+                    const prediction = await this.callPredictionAPI(patientData);
+                    
+                    this.displayResults(prediction);
+                    this.showSuccess('Prediction completed successfully!');
+                    
+                } catch (error) {
+                    console.error('Prediction error:', error);
+                    this.showError('Failed to get prediction. Please try again.');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async callPredictionAPI(patientData) {
+                // Simulate API call with realistic delay
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Mock prediction logic based on clinical knowledge
+                const stage = this.mockPredict(patientData);
+                
+                return {
+                    stage: stage,
+                    confidence: Math.random() * 0.3 + 0.7, // 70-100% confidence
+                    feature_importance: {
+                        'Bilirubin': Math.random() * 0.3 + 0.7,
+                        'Albumin': Math.random() * 0.25 + 0.6,
+                        'Prothrombin': Math.random() * 0.2 + 0.5,
+                        'Ascites': Math.random() * 0.15 + 0.4,
+                        'Copper': Math.random() * 0.1 + 0.3
+                    }
+                };
+            }
+
+            mockPredict(data) {
+                // Simple rule-based prediction for demo
+                let score = 0;
+                
+                // Bilirubin scoring
+                if (data.bilirubin > 10) score += 3;
+                else if (data.bilirubin > 3) score += 2;
+                else if (data.bilirubin > 1.2) score += 1;
+                
+                // Albumin scoring (lower is worse)
+                if (data.albumin < 2.5) score += 2;
+                else if (data.albumin < 3.0) score += 1;
+                
+                // Prothrombin scoring
+                if (data.prothrombin > 15) score += 2;
+                else if (data.prothrombin > 13) score += 1;
+                
+                // Clinical signs
+                if (data.ascites === 'Y') score += 1;
+                if (data.edema === 'Y') score += 1;
+                
+                // Convert score to stage
+                if (score >= 6) return 3;
+                if (score >= 3) return 2;
+                return 1;
+            }
+
+            displayResults(prediction) {
+                const { stage, confidence, feature_importance } = prediction;
+                
+                // Update main result
+                this.predictionResult.className = `prediction-result stage-${stage}`;
+                this.predictionResult.innerHTML = `
+                    <div class="stage-number">${stage}</div>
+                    <div class="stage-label">Stage ${stage} Cirrhosis</div>
+                    <div class="confidence-score">Confidence: ${(confidence * 100).toFixed(1)}%</div>
+                `;
+
+                // Update stage information
+                const stageDescriptions = {
+                    1: {
+                        title: "Stage 1 - Mild Fibrosis",
+                        description: "Early stage with portal fibrosis. Liver function is generally preserved. Regular monitoring recommended.",
+                        management: "Lifestyle modifications, treat underlying cause, regular follow-up every 6 months."
+                    },
+                    2: {
+                        title: "Stage 2 - Moderate Fibrosis", 
+                        description: "Progressive fibrosis with portal-to-portal bridging. Some liver function compromise may be present.",
+                        management: "Close monitoring, screening for complications, consider treatment intensification."
+                    },
+                    3: {
+                        title: "Stage 3 - Severe Fibrosis/Cirrhosis",
+                        description: "Advanced fibrosis approaching or at cirrhosis. Significant risk of complications and liver failure.",
+                        management: "Specialist care required, screening for complications, consider liver transplant evaluation."
+                    }
+                };
+
+                const stageData = stageDescriptions[stage];
+                this.stageInfo.innerHTML = `
+                    <h3><i class="fas fa-info-circle"></i> ${stageData.title}</h3>
+                    <p><strong>Description:</strong> ${stageData.description}</p>
+                    <p><strong>Management:</strong> ${stageData.management}</p>
+                `;
+
+                // Update feature importance
+                this.featureImportance.style.display = 'block';
+                const importanceList = document.getElementById('importanceList');
+                importanceList.innerHTML = '';
+                
+                Object.entries(feature_importance)
+                    .sort(([,a], [,b]) => b - a)
+                    .forEach(([feature, importance]) => {
+                        const featureDiv = document.createElement('div');
+                        featureDiv.className = 'feature-bar';
+                        featureDiv.innerHTML = `
+                            <div class="feature-name">${feature}</div>
+                            <div class="feature-progress">
+                                <div class="feature-fill" style="width: ${importance * 100}%"></div>
+                            </div>
+                            <div class="feature-value">${(importance * 100).toFixed(0)}%</div>
+                        `;
+                        importanceList.appendChild(featureDiv);
+                    });
+            }
+
+            showLoading(show) {
+                this.loadingSpinner.style.display = show ? 'block' : 'none';
+                
+                const button = this.form.querySelector('.predict-btn');
+                button.disabled = show;
+                if (show) {
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+                } else {
+                    button.innerHTML = '<i class="fas fa-brain"></i> Predict Cirrhosis Stage';
+                }
+            }
+
+            showError(message) {
+                this.errorMessage.textContent = message;
+                this.errorMessage.style.display = 'block';
+                setTimeout(() => this.hideMessages(), 5000);
+            }
+
+            showSuccess(message) {
+                this.successMessage.textContent = message;
+                this.successMessage.style.display = 'block';
+                setTimeout(() => this.hideMessages(), 3000);
+            }
+
+            showWarning(message) {
+                // Could implement warning system here
+                console.warn(message);
+            }
+
+            hideMessages() {
+                this.errorMessage.style.display = 'none';
+                this.successMessage.style.display = 'none';
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            new LiverCirrhosisPredictor();
+        });
+
+        // Add some interactive animations
+        document.querySelectorAll('.form-group input, .form-group select').forEach(element => {
+            element.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'translateY(-2px)';
+            });
+            
+            element.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>
