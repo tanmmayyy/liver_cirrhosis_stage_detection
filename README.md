@@ -44,7 +44,7 @@ LIVER_CIRRHOSIS_STAGE/
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone <https://github.com/tanmmayyy/liver_cirrhosis_stage_detection.git>
 cd LIVER_CIRRHOSIS_STAGE
 ```
 
@@ -296,4 +296,5 @@ For questions and support:
 ---
 
 **Made with ❤️ for advancing medical AI applications**
+
 
